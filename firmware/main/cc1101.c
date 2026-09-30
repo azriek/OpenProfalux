@@ -115,7 +115,7 @@ static const struct { uint8_t reg, val; } s_regs[] = {
     {CC_FREQ2,    0x21},  /* 868.425 MHz (mesure 2026-08-10, etait 868.35 = hors bande) */
     {CC_FREQ1,    0x66},
     {CC_FREQ0,    0xA5},
-    {CC_MDMCFG4,  0xC6},  /* RX BW 102 kHz (mesure) */
+    {CC_MDMCFG4,  0x86},  /* RX BW 203 kHz (aligne v2 qui capte les Eveno ; etait 0xC6=101 kHz) */
     {CC_MDMCFG3,  0x83},
     {CC_MDMCFG2,  0x30},  /* OOK/ASK modulation, no preamble/sync */
     {CC_MDMCFG1,  0x22},
@@ -123,7 +123,7 @@ static const struct { uint8_t reg, val; } s_regs[] = {
     {CC_DEVIATN,  0x15},
     {CC_MCSM1,    0x3C},   /* reste en RX apres reception (comme le sniffer) */
     {CC_MCSM0,    0x18},   /* FS_AUTOCAL: calibre le PLL a IDLE->TX/RX */
-    {CC_FREND1,   0xB6},   /* front analogique (ref sniffer qui capte) */
+    {CC_FREND1,   0x56},   /* etage d'entree RX : valeur standard SmartRF, aligne v2 (etait 0xB6, atypique) */
     {CC_FREND0,   0x11},   /* PA_POWER=1 => OOK utilise PATABLE[0] et [1] */
     {CC_FOCCFG,   0x14},
     {CC_WORCTRL,  0xFB},
@@ -416,7 +416,7 @@ int cc1101_tx_and_capture_bits(const uint8_t *frame, size_t bits, char *out_bits
 int cc1101_rx_probe(void) {
     if (!s_cap && cc1101_capture_init() != 0) return -1;
     gpio_set_direction(CC1101_PIN_GDO0, GPIO_MODE_INPUT);
-    cc1101_write_reg(0x02, 0x0D); cc1101_write_reg(0x0B, 0x06); cc1101_write_reg(0x19, 0x14);
+    cc1101_write_reg(0x02, 0x0D); cc1101_write_reg(0x0B, 0x06); cc1101_write_reg(0x19, 0x16);
     cc1101_write_reg(0x1B, 0x27); cc1101_write_reg(0x1C, 0x00); cc1101_write_reg(0x1D, 0x91);
     strobe(CC_SIDLE); esp_rom_delay_us(200);
     strobe(0x33); vTaskDelay(pdMS_TO_TICKS(3));
@@ -451,7 +451,7 @@ int cc1101_rx_listen_bits(uint32_t timeout_ms, char *out_bits, int max_bits) {
     gpio_set_direction(CC1101_PIN_GDO0, GPIO_MODE_INPUT);
     cc1101_write_reg(0x02, 0x0D);   /* IOCFG0 = donnee serie demodulee sur GDO0 */
     cc1101_write_reg(0x0B, 0x06);   /* FSCTRL1 */
-    cc1101_write_reg(0x19, 0x14);   /* FOCCFG  */
+    cc1101_write_reg(0x19, 0x16);   /* FOCCFG (aligne v2 ; etait 0x14) */
     cc1101_write_reg(0x1B, s_rx_gain);   /* AGCCTRL2 : plafond de gain LNA, REGLABLE via l'UI (defaut 0x27=-9 dB).
                                        0x07=gain max (bruit permanent, buffer RMT sature) ; 0x3F=-17 dB (mordant,
                                        utile si demod bruitee sur signal fort). Voir cc1101_set_rx_gain(). */
