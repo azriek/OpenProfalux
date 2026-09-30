@@ -15,4 +15,15 @@ config OPENPROFALUX_TARGET_M5STACK
 
 endchoice
 
+config OPENPROFALUX_EXTERNAL_GDO0_GPIO
+    int "GPIO relie a GDO0 du CC1101"
+    depends on OPENPROFALUX_TARGET_EXTERNAL
+    range 0 33
+    default 4
+    help
+      GDO0 sert en entree (reception) et en sortie (emission) : il faut un
+      GPIO bidirectionnel, donc pas 34-39 (entree seule) ni 6-11 (flash).
+      Eviter aussi les broches de demarrage 0, 2, 12 et 15. Sur une
+      D1 mini ESP32 ou IO4 manque, IO26 (D0) convient.
+
 endmenu

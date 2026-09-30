@@ -35,7 +35,7 @@
     #define CC1101_PIN_MOSI           23
     #define CC1101_PIN_SCK            18
     #define CC1101_PIN_CS              5
-    #define CC1101_PIN_GDO0            4  /* Interrupt data */
+    #define CC1101_PIN_GDO0   CONFIG_OPENPROFALUX_EXTERNAL_GDO0_GPIO  /* Data OOK, 4 par defaut */
     #define CC1101_PIN_GDO2            2  /* Debug (optional) */
     #define CC1101_SPI_FREQ_HZ  6000000  /* 6 MHz safe */
 

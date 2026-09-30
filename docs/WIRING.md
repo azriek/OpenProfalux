@@ -45,6 +45,10 @@ Standard électronique universel : rouge/noir pour alim, signaux SPI dans ordre 
 | GDO0 | 🟠 Orange | 15 | GPIO4 |
 | GDO2 | 🟣 Violet | 14 | GPIO2 |
 
+GDO0 se déplace via `menuconfig` → OpenProfalux → « GPIO relie a GDO0 du CC1101 »
+(`CONFIG_OPENPROFALUX_EXTERNAL_GDO0_GPIO`, 4 par défaut). Sur une D1 mini ESP32 où IO4 n'est
+pas sorti, prendre **IO26** (D0).
+
 **Compile flag** :
 - `CONFIG_OPENPROFALUX_TARGET_M5STACK=y` → M5Stack ATOM Lite
 - `CONFIG_OPENPROFALUX_TARGET_EXTERNAL=y` → ESP32 DevKit
