@@ -29,6 +29,36 @@ docker run --rm -e IDF_TARGET=esp32 -v "$PWD":/project/firmware -w /project/firm
 idf.py set-target esp32 && idf.py build
 ```
 
+### Cible ESP32-S3 (carte v2 Eveno/Profalux)
+Nouvelle cible `OPENPROFALUX_TARGET_S3` : ESP32-S3 DevKitC-1 + un CC1101 externe,
+brochage aligné sur la carte v2 (module CC1101-A).
+
+| Signal | GPIO S3 |
+|---|---|
+| CSN | 10 |
+| MOSI | 11 |
+| SCK | 12 |
+| MISO | 13 |
+| GDO0 (données OOK) | 9 |
+
+Le pinout et la config sont dans [`main/hardware_config.h`](main/hardware_config.h)
+(bloc `CONFIG_OPENPROFALUX_TARGET_S3`) et [`sdkconfig.defaults.esp32s3`](sdkconfig.defaults.esp32s3),
+appliqué automatiquement dès qu'on cible `esp32s3` :
+
+```bash
+# local
+idf.py set-target esp32s3 && idf.py build
+idf.py -p /dev/tty.usbmodemXXXX flash monitor   # port USB natif du DevKitC-1
+
+# ou via Docker
+docker run --rm -e IDF_TARGET=esp32s3 -v "$PWD":/project/firmware -w /project/firmware \
+  espressif/idf:v5.2.2 bash -c "idf.py set-target esp32s3 && idf.py build"
+```
+
+> Console sur l'**USB natif** (USB-Serial-JTAG) du S3. Les moteurs **Eveno** peuvent
+> avoir un TE légèrement différent de 455 µs : réglable à chaud dans l'UI (onglet Système,
+> TX TE) sans recompiler.
+
 ## Flash
 
 ### Option A — release pré-compilée (le plus simple, pas d'ESP-IDF)

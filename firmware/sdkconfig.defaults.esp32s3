@@ -1,0 +1,18 @@
+# OpenProfalux — overrides ESP32-S3 (fusionne PAR-DESSUS sdkconfig.defaults)
+# ESP-IDF applique automatiquement ce fichier quand la cible est esp32s3
+# (idf.py set-target esp32s3). Il ne contient QUE les differences vs le defaut.
+
+# ─── Cible materielle : bascule du M5Stack (defaut) vers l'ESP32-S3 ───
+# La derniere valeur d'un "choice" l'emporte : ceci deselectionne M5STACK.
+CONFIG_OPENPROFALUX_TARGET_M5STACK=n
+CONFIG_OPENPROFALUX_TARGET_S3=y
+
+# ─── Flash : DevKitC-1 = 8 Mo (N8/N8R8). Le layout partitions.csv (<4 Mo) y tient. ───
+CONFIG_ESPTOOLPY_FLASHSIZE_4MB=n
+CONFIG_ESPTOOLPY_FLASHSIZE_8MB=y
+
+# ─── Console sur l'USB natif du S3 (USB-Serial-JTAG, port USB de la carte) ───
+# Les logs sortent directement sur le port USB-C "USB" du DevKitC-1, sans TinyUSB.
+# (Pour utiliser plutot le port UART/CP2102, mettre USB_SERIAL_JTAG=n et UART_DEFAULT=y.)
+CONFIG_ESP_CONSOLE_USB_SERIAL_JTAG=y
+CONFIG_ESP_CONSOLE_UART_DEFAULT=n

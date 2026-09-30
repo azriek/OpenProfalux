@@ -72,8 +72,33 @@
     #define LED_ACTIVE_HIGH           1
     #define LED_IS_WS2812             1
 
+#elif defined(CONFIG_OPENPROFALUX_TARGET_S3)
+
+    /* ─── Target ESP32-S3 DevKitC-1 + CC1101 externe ─── */
+    /* Brochage aligne sur la carte v2 Eveno/Profalux (module CC1101-A).
+     * Sur S3 il n'y a plus VSPI/HSPI : les hosts SPI generiques sont
+     * SPI2_HOST / SPI3_HOST. On prend SPI2_HOST (equiv. de l'ex-HSPI). */
+    #define TARGET_NAME               "esp32s3"
+
+    #define CC1101_SPI_HOST           SPI2_HOST
+    #define CC1101_PIN_MISO           13
+    #define CC1101_PIN_MOSI           11
+    #define CC1101_PIN_SCK            12
+    #define CC1101_PIN_CS             10
+    #define CC1101_PIN_GDO0            9  /* donnees OOK : RMT RX + bit-bang TX */
+    #define CC1101_PIN_GDO2            8  /* debug (optionnel, non utilise par le code) */
+    #define CC1101_SPI_FREQ_HZ  4000000  /* 4 MHz : sur du Dupont c'est le plus sur */
+
+    /* Aucun bouton — tout via MQTT/HA/UI web */
+
+    /* LED RGB embarquee du DevKitC-1 (WS2812 sur GPIO48).
+     * Macro decorative : le firmware ne pilote pas la LED (pas de dep led_strip). */
+    #define LED_PIN                   48
+    #define LED_ACTIVE_HIGH           1
+    #define LED_IS_WS2812             1
+
 #else
-    #error "Please select CONFIG_OPENPROFALUX_TARGET_EXTERNAL or CONFIG_OPENPROFALUX_TARGET_M5STACK"
+    #error "Please select CONFIG_OPENPROFALUX_TARGET_EXTERNAL, _M5STACK or _S3"
 #endif
 
 /* ═══════════════════════════════════════════════════════════════
