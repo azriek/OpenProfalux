@@ -19,7 +19,9 @@
 /* Charge la config NVS + demarre la tache de suivi position. */
 void shutters_init(void);
 
-/* Commande : cmd = "up" | "down" | "stop" | "pos" (value = 0..100). Rejoue la trame + suit la position. */
+/* Commande : cmd = "up" | "down" | "stop" | "inter" | "pos" (value = 0..100).
+ * "inter" rejoue la trame STOP+Descente captee = position intermediaire preenregistree du volet.
+ * Rejoue la trame + suit la position. */
 int  shutters_cmd(const char *id, const char *cmd, int value);
 int  shutters_delete_volet(const char *id);
 

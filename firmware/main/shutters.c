@@ -36,7 +36,8 @@ typedef struct {
     char serials[SH_MAX_SERIALS][SH_SERIAL_LEN];
     int  n_serials;
     char up[SH_BITS_LEN], down[SH_BITS_LEN], stop[SH_BITS_LEN];
-    uint8_t up_btn, down_btn, stop_btn;   /* code bouton appris (pour la sync RX) */
+    char inter[SH_BITS_LEN];              /* position intermediaire preenregistree = appui STOP+Descente simultane */
+    uint8_t up_btn, down_btn, stop_btn, inter_btn;   /* code bouton appris (pour la sync RX) */
     /* Volet VIRTUEL (identite 0x067 enrolee) : au lieu de rejouer up/down/stop captes,
      * on GENERE la trame a chaque appui (keeloq + compteur roulant). */
     bool     virt;
@@ -189,9 +190,11 @@ static char *cfg_to_json(void) {
         cJSON_AddStringToObject(cmd, "up", v->up);
         cJSON_AddStringToObject(cmd, "down", v->down);
         cJSON_AddStringToObject(cmd, "stop", v->stop);
+        cJSON_AddStringToObject(cmd, "inter", v->inter);
         cJSON_AddNumberToObject(o, "up_btn", v->up_btn);
         cJSON_AddNumberToObject(o, "down_btn", v->down_btn);
         cJSON_AddNumberToObject(o, "stop_btn", v->stop_btn);
+        cJSON_AddNumberToObject(o, "inter_btn", v->inter_btn);
         cJSON_AddNumberToObject(o, "travel_up_ms", v->travel_up_ms);
         cJSON_AddNumberToObject(o, "travel_down_ms", v->travel_down_ms);
         cJSON_AddNumberToObject(o, "orientation", v->orientation);
@@ -393,10 +396,12 @@ static void parse_cfg_json(cJSON *root) {
             strlcpy(v->up,   cJSON_GetStringValue(cJSON_GetObjectItem(cmd, "up"))   ?: "", SH_BITS_LEN);
             strlcpy(v->down, cJSON_GetStringValue(cJSON_GetObjectItem(cmd, "down")) ?: "", SH_BITS_LEN);
             strlcpy(v->stop, cJSON_GetStringValue(cJSON_GetObjectItem(cmd, "stop")) ?: "", SH_BITS_LEN);
+            strlcpy(v->inter, cJSON_GetStringValue(cJSON_GetObjectItem(cmd, "inter")) ?: "", SH_BITS_LEN);
         }
         v->up_btn   = (uint8_t)cJSON_GetNumberValue(cJSON_GetObjectItem(o, "up_btn"));
         v->down_btn = (uint8_t)cJSON_GetNumberValue(cJSON_GetObjectItem(o, "down_btn"));
         v->stop_btn = (uint8_t)cJSON_GetNumberValue(cJSON_GetObjectItem(o, "stop_btn"));
+        v->inter_btn = (uint8_t)cJSON_GetNumberValue(cJSON_GetObjectItem(o, "inter_btn"));
         v->travel_up_ms   = cJSON_GetNumberValue(cJSON_GetObjectItem(o, "travel_up_ms"));
         v->travel_down_ms = cJSON_GetNumberValue(cJSON_GetObjectItem(o, "travel_down_ms"));
         cJSON *ori = cJSON_GetObjectItem(o, "orientation");
@@ -530,6 +535,15 @@ static void do_stop(volet_t *v) {
     if (v->virt) emit_virt(v, PFX_BTN_STOP);
     else         emit_press(v->stop);    /* rafale STOP = fige le moteur a la position voulue */
     radio_pause_rx(false);  /* fin de notre commande : on reprend l'ecoute (sync + frame-log) */
+}
+/* Position intermediaire : rejoue la trame STOP+Descente simultanee (captee a l'enrolement).
+ * Le moteur rejoint SA position preenregistree ; on ne connait pas le %, donc on ne touche
+ * PAS a l'estimation (la vraie position sera resynchronisee au prochain mouvement plein-course). */
+static void do_inter(volet_t *v) {
+    v->dir = 0; v->target = -1; v->own_move = false;
+    radio_pause_rx(true);
+    emit_press(v->inter);
+    radio_pause_rx(false);
 }
 /* Sync depuis une commande EXTERNE (vraie telecommande) : suit sans emettre.
  * Le moteur part vers la butee (target) ; l'arret intermediaire vient du STOP (freeze). */
@@ -667,6 +681,7 @@ int shutters_cmd(const char *id, const char *cmd, int value) {
             if      (!strcmp(cmd, "up"))   { m->target = 0;   start_move(m, +1); }
             else if (!strcmp(cmd, "down")) { m->target = 100; start_move(m, -1); }
             else if (!strcmp(cmd, "stop")) { do_stop(m); }
+            else if (!strcmp(cmd, "inter")) { do_inter(m); }
             publish_volet_state(m);
         }
         if (!strcmp(cmd, "up")) v->position = 0; else if (!strcmp(cmd, "down")) v->position = 100;
@@ -679,6 +694,7 @@ int shutters_cmd(const char *id, const char *cmd, int value) {
     if (!strcmp(cmd, "up"))        { v->target = 0;   start_move(v, +1); }   /* ouvrir : monter vers 0 */
     else if (!strcmp(cmd, "down")) { v->target = 100; start_move(v, -1); }   /* fermer : descendre vers 100 */
     else if (!strcmp(cmd, "stop")) { do_stop(v); }
+    else if (!strcmp(cmd, "inter")) { do_inter(v); }   /* rejoint la position intermediaire preenregistree */
     else if (!strcmp(cmd, "pos"))  {   /* value = % de fermeture voulu */
         if (value < 0) value = 0;
         if (value > 100) value = 100;
@@ -749,6 +765,7 @@ int shutters_learn_assign(const char *id, const char *action, const char *bits) 
     if      (!strcmp(action, "up"))   { strlcpy(v->up, bits, SH_BITS_LEN);   v->up_btn = btn; }
     else if (!strcmp(action, "down")) { strlcpy(v->down, bits, SH_BITS_LEN); v->down_btn = btn; }
     else if (!strcmp(action, "stop")) { strlcpy(v->stop, bits, SH_BITS_LEN); v->stop_btn = btn; }
+    else if (!strcmp(action, "inter")) { strlcpy(v->inter, bits, SH_BITS_LEN); v->inter_btn = btn; }
     else { UNLOCK(); return -1; }
     /* memorise le serial de cette telecommande pour ce volet (sync position) */
     uint32_t ser = 0; if ((int)strlen(bits) >= 60) for (int i = 0; i < 28; i++) if (bits[32 + i] == '1') ser |= (1u << i);
@@ -826,9 +843,10 @@ int shutters_create_central(const char *id, const char *members_csv) {
 
 /* Champs (bits + bouton) d'une action pour un volet. NULL si action inconnue. */
 static char *action_bits(volet_t *v, const char *a, uint8_t **btn) {
-    if (!strcmp(a, "up"))   { *btn = &v->up_btn;   return v->up; }
-    if (!strcmp(a, "stop")) { *btn = &v->stop_btn; return v->stop; }
-    if (!strcmp(a, "down")) { *btn = &v->down_btn; return v->down; }
+    if (!strcmp(a, "up"))    { *btn = &v->up_btn;    return v->up; }
+    if (!strcmp(a, "stop"))  { *btn = &v->stop_btn;  return v->stop; }
+    if (!strcmp(a, "down"))  { *btn = &v->down_btn;  return v->down; }
+    if (!strcmp(a, "inter")) { *btn = &v->inter_btn; return v->inter; }
     return NULL;
 }
 
@@ -1028,9 +1046,10 @@ int shutters_status_json(char *buf, int cap) {
         /* etat des 3 commandes : bouton appris (nibble) si le slot est rempli, absent sinon.
          * Permet a l'UI d'apprentissage centree-volet d'afficher appris / a capturer. */
         cJSON *cmd = cJSON_AddObjectToObject(o, "cmd");
-        add_cmd_json(cmd, "up",   v->up,   v->up_btn);
-        add_cmd_json(cmd, "stop", v->stop, v->stop_btn);
-        add_cmd_json(cmd, "down", v->down, v->down_btn);
+        add_cmd_json(cmd, "up",    v->up,    v->up_btn);
+        add_cmd_json(cmd, "stop",  v->stop,  v->stop_btn);
+        add_cmd_json(cmd, "down",  v->down,  v->down_btn);
+        add_cmd_json(cmd, "inter", v->inter, v->inter_btn);
         cJSON_AddItemToArray(vols, o);
     }
     cJSON *rf = cJSON_AddArrayToObject(root, "rf");   /* recentes seulement ; les 300 via /api/rf */

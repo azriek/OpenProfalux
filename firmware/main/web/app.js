@@ -102,7 +102,7 @@ function renderVolets(list, rf) {
     const showP = showPos && !isC;
     el.innerHTML = `
       <div class="top"><span class="name">${isC ? '🎛' : '🪟'} ${esc(v.id)}${isC ? ' <span class="badge">centrale</span>' : ''}</span>${showP ? `<span class="pct">${v.position ?? '?'}%</span>` : ''}</div>
-      <div class="dpad"><button data-cmd="up">▲</button><button data-cmd="stop">■</button><button data-cmd="down">▼</button></div>
+      <div class="dpad"><button data-cmd="up">▲</button><button data-cmd="stop">■</button><button data-cmd="down">▼</button>${(v.cmd && v.cmd.inter) ? '<button data-cmd="inter" title="Position intermédiaire préenregistrée">★</button>' : ''}</div>
       ${showP ? `<div class="slat" style="--p:${v.position ?? 50}"></div>` : ''}
       <div class="serials">${isC
         ? 'volets : ' + (esc(v.members || '') || 'aucun') + ' <span class="hint">(gérer dans Télécommandes -> Centrale)</span>'
@@ -120,9 +120,10 @@ function renderVolets(list, rf) {
 
 /* ── Apprentissage (centré volet) ── */
 const LEARN_ACTIONS = [
-  { a: 'up',   ico: '▲', lbl: 'Montée' },
-  { a: 'stop', ico: '■', lbl: 'Stop' },
-  { a: 'down', ico: '▼', lbl: 'Descente' },
+  { a: 'up',    ico: '▲', lbl: 'Montée' },
+  { a: 'stop',  ico: '■', lbl: 'Stop' },
+  { a: 'down',  ico: '▼', lbl: 'Descente' },
+  { a: 'inter', ico: '★', lbl: 'Position intermédiaire (Stop + Descente)' },
 ];
 let learning = false;   // capture en cours
 let activeVolet = '';   // volet selectionne pour l'apprentissage
