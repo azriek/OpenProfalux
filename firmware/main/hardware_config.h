@@ -81,7 +81,7 @@
  * ═══════════════════════════════════════════════════════════════ */
 
 /* Valeurs MESUREES sur l'air le 2026-08-10 (captures/2026-08-10-profalux-868). */
-#define PROFALUX_FREQ_HZ          868425000UL  /* 868,425 MHz (etait 868,350 = hors bande) */
+#define PROFALUX_FREQ_HZ          868330000UL  /* 868,33 MHz : porteuse Eveno (scan 2026-09-30). Profalux=868,425 */
 #define PROFALUX_TE_US                  455    /* element de base T_E mesure */
 #define PROFALUX_BIT_TIME_US           1365    /* periode de bit = 3*Te */
 #define PROFALUX_PREAMBLE_ELEMENTS       23    /* 23 alternances de Te */

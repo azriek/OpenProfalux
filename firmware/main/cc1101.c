@@ -112,9 +112,10 @@ static const struct { uint8_t reg, val; } s_regs[] = {
     {CC_FIFOTHR,  0x47},
     {CC_PKTLEN,   0xFF},
     {CC_PKTCTRL0, 0x32},  /* Async serial, no CRC, infinite packet */
-    {CC_FREQ2,    0x21},  /* 868.425 MHz (mesure 2026-08-10, etait 868.35 = hors bande) */
-    {CC_FREQ1,    0x66},
-    {CC_FREQ0,    0xA5},
+    {CC_FREQ2,    0x21},  /* 868.33 MHz : pic Eveno mesure au scan 2026-09-30 (plateau 868.30-868.36).
+                             Profalux etait a 868.425 (0x21/0x66/0xA5) ; cette carte ne pilote que de l'Eveno. */
+    {CC_FREQ1,    0x65},
+    {CC_FREQ0,    0xB6},
     {CC_MDMCFG4,  0xC6},  /* RX BW 102 kHz (mesure) */
     {CC_MDMCFG3,  0x83},
     {CC_MDMCFG2,  0x30},  /* OOK/ASK modulation, no preamble/sync */
