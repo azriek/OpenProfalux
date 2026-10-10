@@ -273,7 +273,7 @@ function renderVolets(list, rf) {
       ${showP ? `<div class="slat" style="--p:${v.position ?? 50}"></div>` : ''}
       <div class="serials">${isC
         ? 'volets : ' + (esc(v.members || '') || 'aucun') + ' <span class="hint">(gérer dans Télécommandes -> Centrale)</span>'
-        : 'serials : ' + ((v.serials || []).map(s => `<code>${esc(remoteName(s))}</code>`).join(' ') || 'aucun') + (r != null ? `<span style="margin-left:6px">· reçu ${sig(r)}</span>` : '')}</div>`;
+        : 'serials : ' + ((v.serials || []).map(s => `<code>${esc(remoteName(s))}</code>${battIcon(s)}`).join(' ') || 'aucun') + (r != null ? `<span style="margin-left:6px">· reçu ${sig(r)}</span>` : '')}</div>`;
     /* En mode reorganisation, le pilotage est NEUTRALISE : un clic mal place ne
        doit pas faire partir un volet pendant qu'on range l'affichage. */
     el.querySelectorAll('[data-cmd]').forEach(b => {
@@ -510,6 +510,15 @@ function renderRemotes(map, rf) {
   }
 }
 const remoteName = s => (statusCache.remotes || {})[s] || s;
+/* Pile d'une telecommande (bit VLOW des trames) : rien tant qu'aucune trame complete n'a ete
+   vue depuis le demarrage du boitier. */
+function battIcon(s) {
+  const b = (statusCache.remote_battery || {})[s];
+  if (!b) return '';
+  return b.low
+    ? ' <span class="badge" style="color:var(--danger)" title="Bit « pile faible » vu sur plusieurs appuis d\'affilée">🪫 pile faible</span>'
+    : ' <span title="Pile OK (dernière trame reçue)">🔋</span>';
+}
 
 /* ── Calibration ── */
 let calT = {}, calStart = 0, calibLive = false;   /* calibLive : true pendant un chrono -> ne pas ecraser l'affichage */
